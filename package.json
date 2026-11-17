@@ -1,0 +1,54 @@
+{
+  "name": "datacollector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Сбор показателей строительных объектов из источников (МГЭ, МГЗ, СУИД, Дашборд, Google Sheets, Yandex), агрегация в PostgreSQL, SPA для просмотра и выгрузки справок",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "shared",
+    "db",
+    "core",
+    "backend",
+    "worker",
+    "frontend"
+  ],
+  "scripts": {
+    "setup": "npm install",
+    "dev:api": "dotenv -e .env -- npm run dev -w backend",
+    "dev:worker": "dotenv -e .env -- npm run dev -w worker",
+    "dev:web": "npm run dev -w frontend",
+    "db:migrate": "prisma migrate deploy --schema db/prisma/schema.prisma",
+    "db:migrate:dev": "prisma migrate dev --schema db/prisma/schema.prisma",
+    "db:generate": "prisma generate --schema db/prisma/schema.prisma",
+    "db:studio": "dotenv -e .env -- prisma studio --schema db/prisma/schema.prisma",
+    "db:smoke": "docker compose exec -T postgres psql -U ${POSTGRES_USER:-datacollector} -d ${POSTGRES_DB:-datacollector} < db/scripts/smoke-test.sql",
+    "db:smoke:local": "dotenv -e .env -- node scripts/smoke-run.mjs",
+    "import:objects": "dotenv -e .env -- tsx db/scripts/import-objects.ts",
+    "seed:demo": "dotenv -e .env -- tsx db/scripts/seed-demo.ts seed",
+    "seed:demo:clear": "dotenv -e .env -- tsx db/scripts/seed-demo.ts clear",
+    "login:mge": "dotenv -e .env -- tsx worker/scripts/login-mge.ts",
+    "login:sudir": "dotenv -e .env -- tsx worker/scripts/login-sudir.ts",
+    "resolve:mge": "dotenv -e .env -- tsx worker/scripts/resolve-mge.ts",
+    "make:templates": "tsx scripts/make-templates.ts",
+    "mock:mge": "node scripts/mock-mge.mjs",
+    "serve:spa": "node scripts/serve-spa.mjs",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w db && npm run typecheck -w core && npm run typecheck -w backend && npm run typecheck -w worker && npm run typecheck -w frontend",
+    "build:libs": "npm run build -w shared && npm run build -w db && npm run build -w core",
+    "build": "npm run build:libs && npm run build -w worker && npm run build -w frontend",
+    "pretypecheck": "npm run build:libs"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.0.0",
+    "docx": "^9.0.2"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
+  }
+}

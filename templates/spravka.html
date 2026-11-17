@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Справка о показателях объекта</title>
+<style>
+  @page { size: A4; margin: 18mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "PT Serif", "Times New Roman", serif; color: #1a1a1a; font-size: 11pt; margin: 0; }
+  h1 { font-size: 15pt; text-align: center; margin: 0 0 4mm; text-transform: uppercase; letter-spacing: .4px; }
+  .meta { width: 100%; border-collapse: collapse; margin-bottom: 6mm; }
+  .meta td { padding: 2mm 3mm; border: 1px solid #c9c9c9; }
+  .meta td:first-child { width: 38%; font-weight: 700; background: #f4f6f9; }
+  table.metrics { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  table.metrics th { background: #2b5797; color: #fff; padding: 2mm 2.5mm; text-align: left; border: 1px solid #2b5797; }
+  table.metrics td { padding: 1.6mm 2.5mm; border: 1px solid #c9c9c9; }
+  table.metrics tr:nth-child(even) td { background: #f7f9fc; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  footer { margin-top: 6mm; font-size: 8.5pt; color: #777; font-style: italic; }
+</style>
+</head>
+<body>
+  <h1>Справка о показателях объекта</h1>
+  <table class="meta">
+    <tr><td>Наименование объекта</td><td>{{object.name}}</td></tr>
+    <tr><td>Код ДС</td><td>{{object.code_ds}}</td></tr>
+    <tr><td>УИН</td><td>{{object.uin}}</td></tr>
+    <tr><td>Идентификатор СУИД</td><td>{{object.suid_id}}</td></tr>
+    <tr><td>Период</td><td>{{period_label}}</td></tr>
+    <tr><td>Метрик всего</td><td>{{metrics_count}}</td></tr>
+  </table>
+  <table class="metrics">
+    <thead>
+      <tr><th>Показатель</th><th>Значение</th><th>Ед. изм.</th><th>Период</th><th>Источник</th></tr>
+    </thead>
+    <tbody>
+      {{#each metrics}}
+      <tr>
+        <td>{{this.key}}</td>
+        <td class="num">{{this.value}}</td>
+        <td>{{this.unit}}</td>
+        <td>{{#if this.period}}{{this.period}}{{else}}текущее{{/if}}</td>
+        <td>{{this.source}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <footer>Сформировано: {{generated_at}} · DataCollector</footer>
+</body>
+</html>

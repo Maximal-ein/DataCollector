@@ -1,0 +1,23 @@
+# Зависимости и артефакты сборки
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Секреты и окружение
+.env
+.env.*
+!.env.example
+secrets/
+
+# Логи
+*.log
+npm-debug.log*
+
+# Playwright
+playwright-report/
+test-results/
+.blob-storage/
+
+# Системное
+.DS_Store
+Thumbs.db

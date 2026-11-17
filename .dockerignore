@@ -1,0 +1,11 @@
+# Контекст сборки Docker — общий корень репозитория (см. docker-compose.yml).
+**/node_modules
+**/dist
+.env
+.env.*
+!.env.example
+secrets
+.git
+*.log
+playwright-report
+test-results

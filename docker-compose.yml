@@ -1,0 +1,96 @@
+name: datacollector
+
+# Один сервер в локальной сети: postgres + api + worker + frontend(nginx).
+# Миграции применяются при старте api (prisma migrate deploy в CMD backend/Dockerfile).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-datacollector}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-datacollector}
+      POSTGRES_DB: ${POSTGRES_DB:-datacollector}
+      TZ: ${TZ:-Europe/Moscow}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # наружу не торчит: доступ только с самого сервера (для разработки/psql)
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    shm_size: 1gb          # Chromium (PDF-справки, диагностика МГЭ) требует shared memory
+    environment:
+      # внутри compose-сети хост БД — postgres (переопределяет .env)
+      DATABASE_URL: postgresql://${POSTGRES_USER:-datacollector}:${POSTGRES_PASSWORD:-datacollector}@postgres:5432/${POSTGRES_DB:-datacollector}?schema=public
+      NODE_ENV: production
+      TZ: ${TZ:-Europe/Moscow}
+    volumes:
+      # шаблоны справок — правятся на хосте, без пересборки образа
+      - ./templates:/app/templates:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      # прямой доступ к API для отладки; снаружи пользователи ходят через frontend (порт 80)
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    shm_size: 1gb          # Chromium в Docker требует больше shared memory
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-datacollector}:${POSTGRES_PASSWORD:-datacollector}@postgres:5432/${POSTGRES_DB:-datacollector}?schema=public
+      NODE_ENV: production
+      TZ: ${TZ:-Europe/Moscow}
+    volumes:
+      # сервисный аккаунт Google (read-only); создать каталог secrets/ на сервере
+      - ./secrets:/app/secrets:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # проверяет доступность PostgreSQL из контейнера воркера
+      test: ["CMD", "node", "worker/healthcheck.cjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  pgdata:

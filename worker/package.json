@@ -1,0 +1,27 @@
+{
+  "name": "@dc/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dc/core": "*",
+    "@dc/db": "*",
+    "@dc/shared": "*",
+    "google-auth-library": "^9.14.0",
+    "pg": "^8.12.0",
+    "pg-boss": "^10.1.0",
+    "playwright": "1.49.0",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/pg": "^8.11.0",
+    "typescript": "~5.6.2"
+  }
+}
